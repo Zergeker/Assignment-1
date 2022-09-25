@@ -5,12 +5,9 @@
 
 const void showCurrentDateTime() {
 	time_t     now = time(0);
-	struct tm  tstruct;
-	char       buf[80];
-	localtime_s(&tstruct, &now);
-	strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
-	printf(buf);
-	printf("\n");
+	struct tm tm = *localtime(&now);
+
+	printf("%d %d %d \n", tm.tm_hour , tm.tm_min, tm.tm_sec);
 }
 
 bool performNextOperation(char* str, int stringSize, int alphabetSize, int alphabetMaxValue, int addedNum)

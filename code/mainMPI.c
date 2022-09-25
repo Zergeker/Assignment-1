@@ -94,7 +94,6 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < sizePass; i++)
 	{
 		str[i] = -128;
-		str[i] = -128;
 	}
 
 	str[sizePass] = '\0';

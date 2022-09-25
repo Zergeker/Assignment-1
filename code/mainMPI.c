@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
-#include <string>
 #include "crackme.h"
 
 const void showCurrentDateTime() {

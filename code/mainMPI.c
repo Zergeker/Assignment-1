@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
+#include <stdbool.h>
 #include "crackme.h"
 
 const void showCurrentDateTime() {
@@ -22,15 +23,15 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 	{
 		if (stringSize > 1)
 		{
-			str[stringSize - 1] = char((int)str[stringSize - 1] + b - alphabetSize);
+			str[stringSize - 1] = (int)str[stringSize - 1] + b - alphabetSize;
 			int j = stringSize - 2;
-			str[j] = char((int)str[j] + 1);
+			str[j] = (int)str[j] + 1;
 			while ((int)str[j] == alphabetMaxValue)
 			{
 				if (j > 0)
 				{
-					str[j] = char(-128);
-					str[--j] = char((int)str[j] + 1);
+					str[j] = -128;
+					str[--j] = (int)str[j] + 1;
 				}
 				else
 					return false;
@@ -40,7 +41,7 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 			return false;
 	}
 	else
-		str[stringSize - 1] = char((int)str[stringSize - 1] + b);
+		str[stringSize - 1] = (int)str[stringSize - 1] + b;
 
 	int counter = 0;
 	while (a > 0)
@@ -53,15 +54,15 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 		{
 			if (stringSize > 1)
 			{
-				str[stringSize - 2 - counter] = char((int)str[stringSize - 2 - counter] + c - alphabetSize);
+				str[stringSize - 2 - counter] = (int)str[stringSize - 2 - counter] + c - alphabetSize;
 				int j = stringSize - 3 - counter;
-				str[j] = char((int)str[j] + 1);
+				str[j] = (int)str[j] + 1;
 				while ((int)str[j] == alphabetMaxValue)
 				{
 					if (j > 0)
 					{
-						str[j] = char(-128);
-						str[--j] = char((int)str[j] + 1);
+						str[j] = -128;
+						str[--j] = (int)str[j] + 1;
 					}
 					else
 						return false;
@@ -71,7 +72,7 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 				return false;
 		}
 		else
-			str[stringSize - 2 - counter] = char((int)str[stringSize - 2 - counter] + c);
+			str[stringSize - 2 - counter] = (int)str[stringSize - 2 - counter] + c;
 
 		counter++;
 	}
@@ -92,7 +93,8 @@ int main(int argc, char** argv) {
 	char* str = (char*)malloc((sizePass + 1) * sizeof(char));
 	for (int i = 0; i < sizePass; i++)
 	{
-		str[i] = char(-128);
+		str[i] = -128;
+		str[i] = -128;
 	}
 
 	str[sizePass] = '\0';

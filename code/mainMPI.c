@@ -4,12 +4,14 @@
 #include <stdbool.h>
 #include "crackme.h"
 
+//function for computing a permutation for the next iteration
 bool performNextOperation(char* str, int stringSize, int alphabetSize, int alphabetMaxValue, int addedNum)
 {
 	int a = addedNum / alphabetSize;
 	int b = addedNum % alphabetSize;
 
-
+	//if sum of addedNum modulo and last char numerical value is bigger than alphabet max size
+	//the previous char gets increased by 1
 	if ((int)str[stringSize - 1] + b > alphabetMaxValue)
 	{
 		if (stringSize > 1)
@@ -24,7 +26,6 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 					str[j] = -128;
 					j--;
 					str[j] = (int)str[j] + 1;
-					//if (j == 0) printf("%s \n", str);
 				}
 				else
 					return false;
@@ -37,6 +38,7 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 		str[stringSize - 1] = (int)str[stringSize - 1] + b;
 
 	int counter = 0;
+
 	while (a > 0)
 	{
 		int c = a % alphabetSize;
@@ -80,8 +82,8 @@ int main(int argc, char** argv) {
 	}
 
 	int sizePass = atoi(argv[1]);
-	const int alphabet = 127;
 
+	//initializing a zero-char filled char* of a size passed into the function
 	char* str = (char*)malloc((sizePass + 1) * sizeof(char));
 	for (int i = 0; i < sizePass; i++)
 	{
@@ -106,18 +108,22 @@ int main(int argc, char** argv) {
 	bool passwordFlag = true;
 	int probeFlag;
 
+	//storing time of the begging of computations
 	time_t t1 = time(0);
 
 	passwordFlag = performNextOperation(str, sizePass, 256, 127, world_rank);
 
 	while (passwordFlag)
 	{
+		//check if current permutation is the one we are looking for
 		check = p(sizePass, str);
 		if (check == 0)
 		{
+			//if the needed permutation is found, break the loop
 			passwordFlag = false;
 			if (world_size > 0)
 			{
+				//send signal to other processes
 				int msg = 1;
 				MPI_Request request;
 				for (int i = 0; i < world_size; i++)
@@ -128,18 +134,20 @@ int main(int argc, char** argv) {
 		else
 			passwordFlag = performNextOperation(str, sizePass, 256, 127, world_size);
 
-		MPI_Iprobe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &probeFlag, MPI_STATUSES_IGNORE);
-		if (probeFlag == 1)
-			passwordFlag = false;
-			
+		//checking for the signal from the process which found the node
+		if (world_size > 0)
+		{
+			MPI_Iprobe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &probeFlag, MPI_STATUSES_IGNORE);
+			//if signal was found, break the loop
+			if (probeFlag == 1)
+				passwordFlag = false;
+		}	
 	}
 
 	time_t t2 = time(0);
 
 	if (check == 0)
 		printf("Pass was found: %s  On rank: %d  It took %f seconds\n'", str, world_rank, difftime(t2, t1));
-	else
-		printf("Pass was not found on node %d. It worked for: %f seconds\n", world_rank, difftime(t2, t1));
 		
 	free(str);
 	MPI_Finalize();

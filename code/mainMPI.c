@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);	
 
-	int check = 0;
+	int check = 1;
 	bool passwordFlag = true;
 	int probeFlag;
 
@@ -134,15 +134,14 @@ int main(int argc, char** argv) {
 			
 	}
 
-	free(str);
-
 	time_t t2 = time(0);
 
-	if (check == 1)
+	if (check == 0)
 		printf("Pass was found: %s  On rank: %d  It took %f seconds\n'", str, world_rank, difftime(t2, t1));
 	else
 		printf("Pass was not found on node %d. It worked for: %f seconds\n", world_rank, difftime(t2, t1));
-
+		
+	free(str);
 	MPI_Finalize();
 	return 0;
 }

@@ -4,20 +4,11 @@
 #include <stdbool.h>
 #include "crackme.h"
 
-const void showCurrentDateTime() {
-	time_t     now = time(0);
-	struct tm  tstruct;
-	char       buf[80];
-	localtime_s(&tstruct, &now);
-	strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
-	printf(buf);
-	printf("\n");
-}
-
 bool performNextOperation(char* str, int stringSize, int alphabetSize, int alphabetMaxValue, int addedNum)
 {
 	int a = addedNum / alphabetSize;
 	int b = addedNum % alphabetSize;
+
 
 	if ((int)str[stringSize - 1] + b > alphabetMaxValue)
 	{
@@ -31,7 +22,9 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 				if (j > 0)
 				{
 					str[j] = -128;
-					str[--j] = (int)str[j] + 1;
+					j--;
+					str[j] = (int)str[j] + 1;
+					//if (j == 0) printf("%s \n", str);
 				}
 				else
 					return false;
@@ -49,7 +42,6 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 		int c = a % alphabetSize;
 		a = a / alphabetSize;
 
-
 		if ((int)str[stringSize - 2 - counter] + c > alphabetMaxValue)
 		{
 			if (stringSize > 1)
@@ -62,7 +54,8 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 					if (j > 0)
 					{
 						str[j] = -128;
-						str[--j] = (int)str[j] + 1;
+						j--;
+						str[j] = (int)str[j] + 1;
 					}
 					else
 						return false;
@@ -78,7 +71,6 @@ bool performNextOperation(char* str, int stringSize, int alphabetSize, int alpha
 	}
 	return true;
 }
-
 
 int main(int argc, char** argv) {
 
@@ -98,17 +90,12 @@ int main(int argc, char** argv) {
 
 	str[sizePass] = '\0';
 
-	if (p(sizePass, str) == 1)
+	if (p(sizePass, str) == 0)
 	{
-		showCurrentDateTime();
-		printf("SUCCESS ON ZERO CHARS");
+		printf("Password consisted of zero-chars");
 		free(str);
 		return 0;
 	}
-
-	
-	fflush(stdout);
-	showCurrentDateTime();
 
 	int world_rank, world_size;
 	MPI_Init(NULL, NULL);
@@ -116,25 +103,45 @@ int main(int argc, char** argv) {
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);	
 
 	int check = 0;
-	bool flag = true;
+	bool passwordFlag = true;
+	int probeFlag;
 
-	flag = performNextOperation(str, sizePass, 256, 127, world_rank);
+	time_t t1 = time(0);
 
-	while (flag)
+	passwordFlag = performNextOperation(str, sizePass, 256, 127, world_rank);
+
+	while (passwordFlag)
 	{
 		check = p(sizePass, str);
-		if (check == 1)
+		if (check == 0)
 		{
-			showCurrentDateTime();
-			printf("SUCCESS: %s  ON RANK:  << %d \n'", str, world_rank);
-			flag = false;
+			passwordFlag = false;
+			if (world_size > 0)
+			{
+				int msg = 1;
+				MPI_Request request;
+				for (int i = 0; i < world_size; i++)
+					if (i!=world_rank)
+						MPI_Isend(&msg, 1, MPI_INT, i, 1, MPI_COMM_WORLD, &request);
+			}
 		}
 		else
-			flag = performNextOperation(str, sizePass, 256, 127, world_size);
+			passwordFlag = performNextOperation(str, sizePass, 256, 127, world_size);
+
+		MPI_Iprobe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &probeFlag, MPI_STATUSES_IGNORE);
+		if (probeFlag == 1)
+			passwordFlag = false;
+			
 	}
 
-
 	free(str);
+
+	time_t t2 = time(0);
+
+	if (check == 1)
+		printf("Pass was found: %s  On rank: %d  It took %f seconds\n'", str, world_rank, difftime(t2, t1));
+	else
+		printf("Pass was not found on node %d. It worked for: %f seconds\n", world_rank, difftime(t2, t1));
 
 	MPI_Finalize();
 	return 0;
